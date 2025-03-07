@@ -95,81 +95,139 @@ describe('fileViewModel', () => {
         vm = new fileViewModel(() => {});
     });
 
-    it('should parse chat log correctly', () => {
-        vm.rawContents = sampleZoomChat;
-        vm.parseAndRender();
-        
-        expect(vm.parsedContents).to.have.lengthOf(4);  // All messages are parsed
-        expect(vm.parsedContents[0]).to.deep.include({
-            from: 'John Smith',
-            contents: 'Hello everyone',
-            to: 'Everyone'
+    describe('parsing', () => {
+        it('should parse chat log correctly', () => {
+            vm.rawContents = sampleZoomChat;
+            vm.parseAndRender();
+            
+            expect(vm.parsedContents).to.have.lengthOf(4);  // All messages are parsed
+            expect(vm.parsedContents[0]).to.deep.include({
+                from: 'John Smith',
+                contents: 'Hello everyone',
+                to: 'Everyone'
+            });
+            expect(vm.parsedContents[1]).to.deep.include({
+                from: 'Jane Doe',
+                contents: 'Hi John',
+                to: 'John Smith'
+            });
+            expect(vm.parsedContents[2]).to.deep.include({
+                from: 'John Smith',
+                contents: 'How are you?',
+                to: 'Everyone'
+            });
+            expect(vm.parsedContents[3]).to.deep.include({
+                from: 'Jane Doe',
+                contents: "I'm good, thanks!",
+                to: 'Everyone'
+            });
         });
-        expect(vm.parsedContents[1]).to.deep.include({
-            from: 'Jane Doe',
-            contents: 'Hi John',
-            to: 'John Smith'
-        });
-        expect(vm.parsedContents[2]).to.deep.include({
-            from: 'John Smith',
-            contents: 'How are you?',
-            to: 'Everyone'
-        });
-        expect(vm.parsedContents[3]).to.deep.include({
-            from: 'Jane Doe',
-            contents: "I'm good, thanks!",
-            to: 'Everyone'
+
+        it('should handle empty input', () => {
+            vm.rawContents = '';
+            vm.parseAndRender();
+            
+            expect(vm.parsedContents).to.be.an('array').that.is.empty;
         });
     });
 
-    it('should apply substitutions', () => {
-        vm.rawContents = sampleZoomChat;
-        vm.substitutions = [
-            { SEARCH_KEY: 'John Smith', REPLACEMENT_VALUE: 'Johnny' }
-        ];
-        vm.applyFilter();
-        vm.parseAndRender();
-        
-        expect(vm.parsedContents[0].from).to.equal('Johnny');
-        expect(vm.parsedContents[1].from).to.equal('Jane Doe');
+    describe('substitutions', () => {
+        it('should apply substitutions', () => {
+            vm.rawContents = sampleZoomChat;
+            vm.substitutions = [
+                { SEARCH_KEY: 'John Smith', REPLACEMENT_VALUE: 'Johnny' }
+            ];
+            vm.applyFilter();
+            vm.parseAndRender();
+            
+            expect(vm.parsedContents[0].from).to.equal('Johnny');
+            expect(vm.parsedContents[1].from).to.equal('Jane Doe');
+        });
     });
 
-    it('should format markdown correctly', () => {
-        vm.rawContents = sampleZoomChat;
-        vm.parseAndRender();
-        
-        const expectedMarkdown = `- **John Smith**: (12:34:56) Hello everyone
+    describe('markdown rendering', () => {
+        beforeEach(() => {
+            vm.rawContents = sampleZoomChat;
+            vm.parseAndRender();
+        });
+
+        it('should format markdown correctly', () => {
+            const expectedMarkdown = `- **John Smith**: (12:34:56) Hello everyone
 - **John Smith**: (12:34:58) How are you?
 - **Jane Doe**: (12:34:59) I'm good, thanks!`;
-        expect(vm.mdForDisplay.trim()).to.equal(expectedMarkdown.trim());
-    });
+            expect(vm.mdForDisplay.trim()).to.equal(expectedMarkdown.trim());
+        });
 
-    it('should format wiki links correctly', () => {
-        vm.rawContents = sampleZoomChat;
-        vm.useWikiLinksInMarkdown = true;
-        vm.parseAndRender();
-        
-        const expectedMarkdown = `- [[John Smith]]: (12:34:56) Hello everyone
+        it('should format wiki links correctly', () => {
+            vm.useWikiLinksInMarkdown = true;
+            vm.parseAndRender();
+            
+            const expectedMarkdown = `- [[John Smith]]: (12:34:56) Hello everyone
 - [[John Smith]]: (12:34:58) How are you?
 - [[Jane Doe]]: (12:34:59) I'm good, thanks!`;
-        expect(vm.mdForDisplay.trim()).to.equal(expectedMarkdown.trim());
+            expect(vm.mdForDisplay.trim()).to.equal(expectedMarkdown.trim());
+        });
+
+        it('should exclude direct messages', () => {
+            const markdownLines = vm.mdForDisplay.trim().split('\n');
+            expect(markdownLines).to.have.lengthOf(3);  // Only 3 messages (excluding the direct message)
+            expect(markdownLines).to.not.include('- **Jane Doe**: (12:34:57) Hi John');
+        });
     });
 
-    it('should exclude direct messages', () => {
-        vm.rawContents = sampleZoomChat;
-        vm.parseAndRender();
-        
-        // Check that direct messages are excluded from markdown output
-        const markdownLines = vm.mdForDisplay.trim().split('\n');
-        expect(markdownLines).to.have.lengthOf(3);  // Only 3 messages (excluding the direct message)
-        expect(markdownLines).to.not.include('- **Jane Doe**: (12:34:57) Hi John');
-    });
+    describe('html rendering', () => {
+        beforeEach(() => {
+            vm.rawContents = sampleZoomChat;
+            vm.parseAndRender();
+        });
 
-    it('should handle empty input', () => {
-        vm.rawContents = '';
-        vm.parseAndRender();
-        
-        expect(vm.parsedContents).to.be.an('array').that.is.empty;
+        it('should create proper HTML structure', () => {
+            expect(vm.htmlForDisplay.tagName).to.equal('DIV');
+            expect(vm.htmlForDisplay.firstChild.tagName).to.equal('UL');
+            expect(vm.htmlForDisplay.firstChild.children).to.have.lengthOf(3);  // Only 3 messages (excluding direct message)
+        });
+
+        it('should format messages correctly', () => {
+            const firstMessage = vm.htmlForDisplay.firstChild.firstChild;
+            expect(firstMessage.tagName).to.equal('LI');
+            
+            // Check all child elements in order
+            const children = firstMessage.children;
+            expect(children).to.have.lengthOf(4);
+            
+            // Check name (strong)
+            expect(children[0].tagName).to.equal('STRONG');
+            expect(children[0].textContent).to.equal('John Smith');
+            
+            // Check spacer (span with &nbsp;)
+            expect(children[1].tagName).to.equal('SPAN');
+            expect(children[1].innerHTML).to.equal('&nbsp;');
+            
+            // Check timestamp (span with time element)
+            expect(children[2].tagName).to.equal('SPAN');
+            expect(children[2].textContent).to.equal('(12:34:56): ');
+            const timeElement = children[2].children[0];
+            expect(timeElement.tagName).to.equal('TIME');
+            expect(timeElement.textContent).to.equal('12:34:56');
+            
+            // Check message content
+            expect(children[3].tagName).to.equal('SPAN');
+            expect(children[3].textContent).to.equal('Hello everyone');
+        });
+
+        it('should exclude direct messages', () => {
+            const messages = vm.htmlForDisplay.firstChild.children;
+            const directMessage = Array.from(messages).find(msg => 
+                msg.querySelector('strong')?.textContent === 'Jane Doe' && 
+                msg.querySelector('span:last-child')?.textContent === 'Hi John'
+            );
+            expect(directMessage).to.be.undefined;
+        });
+
+        it('should create a separate print view', () => {
+            expect(vm.htmlForPrint).to.not.equal(vm.htmlForDisplay);  // Different objects
+            expect(vm.htmlForPrint.innerHTML).to.equal(vm.htmlForDisplay.innerHTML);  // Same content
+        });
     });
 
     it('should reset properly', () => {
@@ -180,15 +238,5 @@ describe('fileViewModel', () => {
         expect(vm.fileName).to.equal('');
         expect(vm.rawContents).to.be.null;
         expect(vm.parsedContents).to.be.an('array').that.is.empty;
-    });
-
-    it('should filter direct messages in markdown output', () => {
-        vm.rawContents = sampleZoomChat;
-        vm.parseAndRender();
-        
-        const expectedMarkdown = `- **John Smith**: (12:34:56) Hello everyone
-- **John Smith**: (12:34:58) How are you?
-- **Jane Doe**: (12:34:59) I'm good, thanks!`;
-        expect(vm.mdForDisplay.trim()).to.equal(expectedMarkdown.trim());
     });
 }); 
