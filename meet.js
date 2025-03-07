@@ -1,5 +1,10 @@
 var fileContents = "";
 var htmlOutput = null;
+var fileVM = null;
+var substitutionVM = null;
+var floatingTool = null;
+var htmlOutputView = null;
+var lastValidSelection = "";
 
 class substitutionsViewModel {
     static REPLACEMENT_SETTINGS_KEY = "zoom-chat-tool-replacements"
@@ -286,9 +291,6 @@ class fileViewModel {
   }
 }
 
-let fileVM = new fileViewModel(renderContent);
-let substitutionVM = new substitutionsViewModel(handleSubstitutionsChanged);
-
 function handleSubstitutionsChanged() {
     fileVM.substitutions = substitutionVM.liveCopy;
     fileVM.parseAndRender();
@@ -410,39 +412,56 @@ function handleAddReplacement() {
     substitutionVM.addReplacement('example_to_replace', 'replaced_with');
 }
 
-document
-  .getElementById("copy-btn-html")
-  .addEventListener("click", handleCopyHtml);
-document.getElementById("copy-btn-md").addEventListener("click", handleCopyMd);
-document.getElementById('btn-add-replacement').addEventListener('click', handleAddReplacement)
-document.getElementById('btn-reset-settings').addEventListener('click', (evt) => substitutionVM.reset())
+// Initialize the application
+function initializeApp() {
+    // Create view models
+    fileVM = new fileViewModel(renderContent);
+    substitutionVM = new substitutionsViewModel(handleSubstitutionsChanged);
 
-// Set up selection hover tools
-let floatingTool = document.importNode(document.querySelector('template').content, true).childNodes[0];
-let htmlOutputView = document.getElementById('html-output-view');
-var lastValidSelection = ""
-htmlOutputView.onpointerup = () => {
-  let selection = document.getSelection(), text = selection.toString();
-  lastValidSelection = text;
-  if (text !== "") {
-    let rect = selection.getRangeAt(0).getBoundingClientRect();
-    console.dir(rect);
-    floatingTool.style.top = `calc(${rect.top}px - 2rem)`;
-    floatingTool.style.left = `calc(${rect.left}px + calc(${rect.width}px / 2) - 2.5rem)`;
-    floatingTool['text']= text; 
-    document.body.appendChild(floatingTool);
-  }
+    // Set up event listeners
+    document
+        .getElementById("copy-btn-html")
+        .addEventListener("click", handleCopyHtml);
+    document.getElementById("copy-btn-md").addEventListener("click", handleCopyMd);
+    document.getElementById('btn-add-replacement').addEventListener('click', handleAddReplacement)
+    document.getElementById('btn-reset-settings').addEventListener('click', (evt) => substitutionVM.reset())
+
+    // Set up selection hover tools
+    floatingTool = document.importNode(document.querySelector('template').content, true).childNodes[0];
+    htmlOutputView = document.getElementById('html-output-view');
+    htmlOutputView.onpointerup = () => {
+        let selection = document.getSelection(), text = selection.toString();
+        lastValidSelection = text;
+        if (text !== "") {
+            let rect = selection.getRangeAt(0).getBoundingClientRect();
+            console.dir(rect);
+            floatingTool.style.top = `calc(${rect.top}px - 2rem)`;
+            floatingTool.style.left = `calc(${rect.left}px + calc(${rect.width}px / 2) - 2.5rem)`;
+            floatingTool['text']= text; 
+            document.body.appendChild(floatingTool);
+        }
+    }
+
+    // set up event listeners
+    let replaceAll = floatingTool.querySelector('#flt-btn-replace-all');
+    replaceAll.addEventListener('click', (evt) => {
+        console.dir(document.getSelection())
+        substitutionVM.addReplacement(lastValidSelection, "replacement value")
+        focusLastReplacementInput();
+    }, false);
+
+    // Initialize from browser storage
+    substitutionVM.populateFromBrowser();
+    fileVM.substitutions = substitutionVM.liveCopy;
 }
- // set up event listeners
- let replaceAll = floatingTool.querySelector('#flt-btn-replace-all');
- replaceAll.addEventListener('click', (evt) => {
-    console.dir(document.getSelection())
-     substitutionVM.addReplacement(lastValidSelection, "replacement value")
-     focusLastReplacementInput();
- }, false);
 
- // helper to focus last selection
- function focusLastReplacementInput(){
+// Only initialize if we're in the main app page
+if (document.getElementById('upload-button')) {
+    initializeApp();
+}
+
+// helper to focus last selection
+function focusLastReplacementInput(){
     clearFloater();
     let replacementArea = document.getElementById('replacement-area-root');
     let allReplacements = [...replacementArea.querySelectorAll('input.input-replacement-value')]
@@ -451,9 +470,9 @@ htmlOutputView.onpointerup = () => {
         targetNode.focus()
         targetNode.setSelectionRange(0, targetNode.value.length)
     }
- }
+}
 
- // close listener
+// close listener
 document.onpointerdown = (evt) => {
     if (evt.target === document.querySelector('#flt-btn-replace-all')){
         return;
@@ -467,8 +486,4 @@ function clearFloater(){
         floatingTool.remove();
         document.getSelection().removeAllRanges();
     }
-
 }
-
-substitutionVM.populateFromBrowser();
-fileVM.substitutions = substitutionVM.liveCopy;
