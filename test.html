@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zoom Chat Tool Tests</title>
+    <!-- Mocha CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/mocha@10.2.0/mocha.css">
     <style>
         body {
             font-family: monospace;
@@ -11,26 +13,33 @@
             margin: 20px auto;
             padding: 20px;
         }
-        .test-result {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 4px;
-        }
-        .test-result.passed {
-            background-color: #e6ffe6;
-        }
-        .test-result.failed {
-            background-color: #ffe6e6;
+        #mocha {
+            margin: 0;
         }
     </style>
 </head>
 <body>
-    <h1>Zoom Chat Tool Tests</h1>
-    <div id="test-results"></div>
+    <div id="mocha"></div>
 
     <!-- Load the main code first -->
     <script src="meet.js"></script>
-    <!-- Then load the tests -->
+    
+    <!-- Load test dependencies -->
+    <script src="https://unpkg.com/chai@4.3.7/chai.js"></script>
+    <script src="https://unpkg.com/mocha@10.2.0/mocha.js"></script>
+    
+    <!-- Configure Mocha -->
+    <script>
+        mocha.setup('bdd');
+        const { expect } = chai;
+    </script>
+    
+    <!-- Load the tests -->
     <script src="tests.js"></script>
+    
+    <!-- Run the tests -->
+    <script>
+        mocha.run();
+    </script>
 </body>
 </html> 
