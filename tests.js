@@ -5,6 +5,21 @@ if (typeof window === 'undefined') {
     global.window = dom.window;
     global.document = dom.window.document;
     global.navigator = dom.window.navigator;
+    
+    // Set up localStorage mock
+    const localStorageMock = {
+        store: {},
+        getItem: function(key) {
+            return this.store[key] || null;
+        },
+        setItem: function(key, value) {
+            this.store[key] = value;
+        },
+        clear: function() {
+            this.store = {};
+        }
+    };
+    global.window.localStorage = localStorageMock;
 }
 
 // Test data
@@ -20,6 +35,8 @@ describe('substitutionsViewModel', () => {
         // Clear the singleton instance before each test
         substitutionsViewModel.clearInstance();
         vm = new substitutionsViewModel(() => {});
+        // Clear localStorage before each test
+        window.localStorage.clear();
     });
 
     afterEach(() => {
@@ -52,26 +69,17 @@ describe('substitutionsViewModel', () => {
     });
 
     it('should persist and load from localStorage', () => {
-        // Mock localStorage
-        const mockStorage = {};
-        const originalLocalStorage = window.localStorage;
-        window.localStorage = {
-            getItem: (key) => mockStorage[key],
-            setItem: (key, value) => { mockStorage[key] = value; }
-        };
-
         // Test persistence
         vm.addReplacement('John', 'Johnny');
-        expect(mockStorage[substitutionsViewModel.REPLACEMENT_SETTINGS_KEY]).to.exist;
+        const storedValue = window.localStorage.getItem(substitutionsViewModel.REPLACEMENT_SETTINGS_KEY);
+        expect(storedValue).to.exist;
+        expect(JSON.parse(storedValue)).to.deep.equal([{ SEARCH_KEY: 'John', REPLACEMENT_VALUE: 'Johnny' }]);
 
         // Test loading
         const newVm = new substitutionsViewModel(() => {});
         newVm.populateFromBrowser();
         expect(newVm.liveCopy).to.have.lengthOf(1);
         expect(newVm.liveCopy[0].SEARCH_KEY).to.equal('John');
-
-        // Restore original localStorage
-        window.localStorage = originalLocalStorage;
     });
 
     it('should maintain singleton pattern', () => {

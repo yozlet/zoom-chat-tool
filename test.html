@@ -27,11 +27,12 @@
     <!-- Load test dependencies -->
     <script src="https://unpkg.com/chai@4.3.7/chai.js"></script>
     <script src="https://unpkg.com/mocha@10.2.0/mocha.js"></script>
-    
     <!-- Configure Mocha -->
     <script>
-        mocha.setup('bdd');
         const { expect } = chai;
+        mocha.setup({
+            ui: 'bdd'
+        });
     </script>
     
     <!-- Load the tests -->
