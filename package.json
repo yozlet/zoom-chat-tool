@@ -1,0 +1,13 @@
+{
+  "name": "zoom-chat-tool",
+  "version": "1.0.0",
+  "description": "A tool for formatting Zoom chat logs",
+  "scripts": {
+    "test": "mocha tests.js"
+  },
+  "devDependencies": {
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "jsdom": "^24.0.0"
+  }
+} 

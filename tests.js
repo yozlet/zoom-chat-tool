@@ -1,3 +1,11 @@
+// Set up JSDOM for Node environment
+if (typeof window === 'undefined') {
+    const { JSDOM } = require('jsdom');
+    const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+    global.window = dom.window;
+    global.document = dom.window.document;
+    global.navigator = dom.window.navigator;
+}
 
 // Test data
 const sampleZoomChat = `12:34:56 From John Smith: Hello everyone
@@ -9,7 +17,14 @@ describe('substitutionsViewModel', () => {
     let vm;
 
     beforeEach(() => {
+        // Clear the singleton instance before each test
+        substitutionsViewModel.clearInstance();
         vm = new substitutionsViewModel(() => {});
+    });
+
+    afterEach(() => {
+        // Clean up after each test
+        substitutionsViewModel.clearInstance();
     });
 
     it('should add a replacement', () => {
@@ -57,6 +72,11 @@ describe('substitutionsViewModel', () => {
 
         // Restore original localStorage
         window.localStorage = originalLocalStorage;
+    });
+
+    it('should maintain singleton pattern', () => {
+        const vm2 = new substitutionsViewModel(() => {});
+        expect(vm2).to.equal(vm);  // Should be the same instance
     });
 });
 
@@ -127,6 +147,16 @@ describe('fileViewModel', () => {
         vm.rawContents = '';
         vm.parseAndRender();
         
+        expect(vm.parsedContents).to.be.an('array').that.is.empty;
+    });
+
+    it('should reset properly', () => {
+        vm.rawContents = sampleZoomChat;
+        vm.parseAndRender();
+        vm.reset();
+        
+        expect(vm.fileName).to.equal('');
+        expect(vm.rawContents).to.be.null;
         expect(vm.parsedContents).to.be.an('array').that.is.empty;
     });
 }); 
