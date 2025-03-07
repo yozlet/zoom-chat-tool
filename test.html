@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoom Chat Tool Tests</title>
+    <style>
+        body {
+            font-family: monospace;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .test-result.passed {
+            background-color: #e6ffe6;
+        }
+        .test-result.failed {
+            background-color: #ffe6e6;
+        }
+    </style>
+</head>
+<body>
+    <h1>Zoom Chat Tool Tests</h1>
+    <div id="test-results"></div>
+
+    <!-- Load the main code first -->
+    <script src="meet.js"></script>
+    <!-- Then load the tests -->
+    <script src="tests.js"></script>
+</body>
+</html> 
