@@ -1,18 +1,3 @@
-// Simple test utilities
-function assert(condition, message) {
-    if (!condition) {
-        throw new Error(`Test failed: ${message}`);
-    }
-}
-
-function test(name, fn) {
-    try {
-        fn();
-        console.log(`✅ ${name} passed`);
-    } catch (error) {
-        console.error(`❌ ${name} failed:`, error.message);
-    }
-}
 
 // Test data
 const sampleZoomChat = `12:34:56 From John Smith: Hello everyone
