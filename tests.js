@@ -1,25 +1,40 @@
 // Set up JSDOM for Node environment
 if (typeof window === 'undefined') {
+    // Set up test framework for Node
+    const { expect } = require('chai');
+    global.expect = expect;
+
     const { JSDOM } = require('jsdom');
-    const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+    // Create JSDOM instance with localStorage enabled
+    const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
+        url: 'http://localhost', // This enables localStorage
+        pretendToBeVisual: true // This enables visual features
+    });
+
+    // Set up global variables
     global.window = dom.window;
     global.document = dom.window.document;
     global.navigator = dom.window.navigator;
     
-    // Set up localStorage mock
-    const localStorageMock = {
-        store: {},
-        getItem: function(key) {
-            return this.store[key] || null;
-        },
-        setItem: function(key, value) {
-            this.store[key] = value;
-        },
-        clear: function() {
-            this.store = {};
+    // Add FileReader mock
+    global.FileReader = class FileReader {
+        constructor() {
+            this.onload = null;
+        }
+        readAsText(file) {
+            // Simulate async file read
+            setTimeout(() => {
+                if (this.onload) {
+                    this.onload({ target: { result: file.contents || '' } });
+                }
+            }, 0);
         }
     };
-    global.window.localStorage = localStorageMock;
+
+    // Load the main code in Node environment
+    const { substitutionsViewModel, fileViewModel } = require('./meet.js');
+    global.substitutionsViewModel = substitutionsViewModel;
+    global.fileViewModel = fileViewModel;
 }
 
 // Test data

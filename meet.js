@@ -1,3 +1,4 @@
+// Global variables for browser environment
 var fileContents = "";
 var htmlOutput = null;
 var fileVM = null;
@@ -266,7 +267,7 @@ class fileViewModel {
             }
             var li = document.createElement("li");
             var fromSpan = document.createElement("strong");
-            fromSpan.innerText = entry.from;
+            fromSpan.appendChild(document.createTextNode(entry.from));
             li.appendChild(fromSpan);
             let spacer = document.createElement("span");
             spacer.innerHTML = "&nbsp;";
@@ -274,12 +275,12 @@ class fileViewModel {
             let timestamp = document.createElement("span");
             timestamp.appendChild(document.createTextNode("("));
             let timestampValue = document.createElement("time");
-            timestampValue.innerText = entry.timestamp;
+            timestampValue.appendChild(document.createTextNode(entry.timestamp));
             timestamp.appendChild(timestampValue);
             timestamp.appendChild(document.createTextNode("): "));
             li.appendChild(timestamp);
             let contents = document.createElement("span");
-            contents.innerText = entry.contents;
+            contents.appendChild(document.createTextNode(entry.contents));
             li.appendChild(contents);
             unorderedList.appendChild(li);
         }
@@ -462,8 +463,17 @@ function initializeApp() {
     fileVM.substitutions = substitutionVM.liveCopy;
 }
 
+// Export for Node.js environment
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        substitutionsViewModel,
+        fileViewModel,
+        initializeApp
+    };
+}
+
 // Only initialize if we're in the main app page
-if (document.getElementById('upload-button')) {
+if (typeof window !== 'undefined' && document.getElementById('upload-button')) {
     initializeApp();
 }
 
