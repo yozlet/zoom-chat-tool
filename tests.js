@@ -139,6 +139,7 @@ describe('fileViewModel', () => {
         vm.parseAndRender();
         
         const expectedMarkdown = `- **John Smith**: (12:34:56) Hello everyone
+- **John Smith**: (12:34:58) How are you?
 - **Jane Doe**: (12:34:59) I'm good, thanks!`;
         expect(vm.mdForDisplay.trim()).to.equal(expectedMarkdown.trim());
     });
@@ -149,6 +150,7 @@ describe('fileViewModel', () => {
         vm.parseAndRender();
         
         const expectedMarkdown = `- [[John Smith]]: (12:34:56) Hello everyone
+- [[John Smith]]: (12:34:58) How are you?
 - [[Jane Doe]]: (12:34:59) I'm good, thanks!`;
         expect(vm.mdForDisplay.trim()).to.equal(expectedMarkdown.trim());
     });
@@ -157,8 +159,10 @@ describe('fileViewModel', () => {
         vm.rawContents = sampleZoomChat;
         vm.parseAndRender();
         
-        const directMessages = vm.parsedContents.filter(msg => msg.to !== 'Everyone');
-        expect(directMessages).to.be.empty;
+        // Check that direct messages are excluded from markdown output
+        const markdownLines = vm.mdForDisplay.trim().split('\n');
+        expect(markdownLines).to.have.lengthOf(3);  // Only 3 messages (excluding the direct message)
+        expect(markdownLines).to.not.include('- **Jane Doe**: (12:34:57) Hi John');
     });
 
     it('should handle empty input', () => {
