@@ -41,6 +41,17 @@ test('substitutionsViewModel - applyNewSettings', () => {
     assert(vm.liveCopy[1].REPLACEMENT_VALUE === 'Janey', 'Second replacement value should match');
 });
 
+test('substitutionsViewModel - reset', () => {
+    const vm = new substitutionsViewModel(() => {});
+    const newSettings = [
+        { SEARCH_KEY: 'John', REPLACEMENT_VALUE: 'Johnny' },
+        { SEARCH_KEY: 'Jane', REPLACEMENT_VALUE: 'Janey' }
+    ];
+    vm.applyNewSettings(newSettings);
+    vm.reset();
+    assert(vm.liveCopy.length === 0, 'Should have no replacements');
+});
+
 // Test fileViewModel
 test('fileViewModel - parse chat log', () => {
     const vm = new fileViewModel(() => {});
