@@ -99,13 +99,23 @@ describe('fileViewModel', () => {
         vm.rawContents = sampleZoomChat;
         vm.parseAndRender();
         
-        expect(vm.parsedContents).to.have.lengthOf(2);
+        expect(vm.parsedContents).to.have.lengthOf(4);  // All messages are parsed
         expect(vm.parsedContents[0]).to.deep.include({
             from: 'John Smith',
             contents: 'Hello everyone',
             to: 'Everyone'
         });
         expect(vm.parsedContents[1]).to.deep.include({
+            from: 'Jane Doe',
+            contents: 'Hi John',
+            to: 'John Smith'
+        });
+        expect(vm.parsedContents[2]).to.deep.include({
+            from: 'John Smith',
+            contents: 'How are you?',
+            to: 'Everyone'
+        });
+        expect(vm.parsedContents[3]).to.deep.include({
             from: 'Jane Doe',
             contents: "I'm good, thanks!",
             to: 'Everyone'
@@ -166,5 +176,15 @@ describe('fileViewModel', () => {
         expect(vm.fileName).to.equal('');
         expect(vm.rawContents).to.be.null;
         expect(vm.parsedContents).to.be.an('array').that.is.empty;
+    });
+
+    it('should filter direct messages in markdown output', () => {
+        vm.rawContents = sampleZoomChat;
+        vm.parseAndRender();
+        
+        const expectedMarkdown = `- **John Smith**: (12:34:56) Hello everyone
+- **John Smith**: (12:34:58) How are you?
+- **Jane Doe**: (12:34:59) I'm good, thanks!`;
+        expect(vm.mdForDisplay.trim()).to.equal(expectedMarkdown.trim());
     });
 }); 
